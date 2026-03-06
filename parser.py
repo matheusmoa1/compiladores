@@ -1,4 +1,3 @@
-
 from ast_nodes import Number, BinOp
 
 class Parser:
@@ -16,13 +15,20 @@ class Parser:
         if token and token[0] == token_type:
             self.pos += 1
             return token
-        raise SyntaxError(f"Esperado {token_type}, encontrado {token}")
+        posicao = token[2] if token else "?"
+        raise SyntaxError(f"Erro sintático na posição {posicao}: esperado {token_type}, encontrado {token}")
 
     def parse(self):
-        return self.expr()
+        ast = self.expr()
+        if self.current() is not None:
+            tok = self.current()
+            raise SyntaxError(f"Erro sintático na posição {tok[2]}: tokens inesperados após expressão")
+        return ast
 
     def expr(self):
         token = self.current()
+        if token is None:
+            raise SyntaxError("Erro sintático: expressão incompleta")
 
         if token[0] == "NUMBER":
             self.eat("NUMBER")
@@ -32,14 +38,15 @@ class Parser:
             self.eat("LPAREN")
             left = self.expr()
             op_token = self.current()
-            if op_token[0] in ("PLUS", "MINUS", "TIMES", "DIV"):
+            if op_token and op_token[0] in ("PLUS", "MINUS", "TIMES", "DIV"):
                 op = op_token[1]
                 self.pos += 1
             else:
-                raise SyntaxError("Operador esperado")
+                posicao = op_token[2] if op_token else "?"
+                raise SyntaxError(f"Erro sintático na posição {posicao}: operador esperado")
             right = self.expr()
             self.eat("RPAREN")
             return BinOp(left, op, right)
 
         else:
-            raise SyntaxError("Expressão inválida")
+            raise SyntaxError(f"Erro sintático na posição {token[2]}: expressão inválida")
