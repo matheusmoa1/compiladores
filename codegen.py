@@ -1,4 +1,3 @@
-
 def generate(node):
     if node.__class__.__name__ == "Number":
         return f"    mov ${node.value}, %rax\n"
