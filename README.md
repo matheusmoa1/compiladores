@@ -1,38 +1,112 @@
 # Compilador EC1
 
-Este é um compilador didático que converte expressões matemáticas simples para a linguagem de montagem (Assembly x86_64).
+Compilador para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvido na disciplina de Compiladores.  
+Traduz expressões aritméticas com operandos constantes para código Assembly x86-64.
 
-##  Como testar o projeto
+## Exemplos de programas EC1 válidos
 
-Possui duas opções principais para testar o funcionamento do compilador:
-
-### 1. Testes Rápidos (Via Terminal)
-O projeto inclui um arquivo `tests.py` que contém testes pré-definidos (como `42`, `(7 + 11)`). Ao rodá-lo, o compilador irá processar essas expressões e exibir no terminal o código Assembly gerado para cada caso.
-
-**Para verificar os casos testes existentes, execute:**
-```bash
-python3 tests.py
 ```
-*(Não depende de um processador ou arquitetura específica para validar o Assembly via terminal, ideal para testar a gramática no macOS/Windows).*
-
-### 2. Testando e Montando um Arquivo Completo
-Você pode criar o seu próprio arquivo de código origem e realizar a transcrição completa para compilar um executável.
-
-**Passo 1:** Crie um arquivo texto qualquer e escreva uma expressão na sintaxe EC1 (ex: `entrada.ec1`).
-
-**Passo 2:** Rode o compilador para transformar esse arquivo num código fonte Assembly (`saida.s`):
-```bash
-python3 compiler.py entrada.ec1 saida.s
+333
+(6 * 7)
+(3 + (4 + (11 + 7)))
+((427 / 7) + (11 * (231 + 5)))
 ```
 
-**Passo 3:** Converta o arquivo fonte Assembly em um arquivo Objeto (.o) e o use para Linkar (ld) o programa:
-```bash
-as -o saida.o saida.s
-ld -o programa saida.o
-```
-*(Certifique-se de possuir o arquivo `runtime.s` contendo a diretiva final de sistema para que ele seja linkado corretamente).*
+## Estrutura do projeto
 
-**Passo 4:** Rode o arquivo gerado:
-```bash
-./programa
 ```
+compiladores/
+├── ast_nodes.py       # Nós da árvore sintática (Number, BinOp)
+├── lexer.py           # Análise léxica — gera tokens com posição
+├── parser.py          # Análise sintática — produz a AST
+├── interpreter.py     # Interpretador por varredura da árvore
+├── print_tree.py      # Impressão da AST no formato EC1
+├── codegen.py         # Geração de código Assembly x86-64
+├── compiler.py        # Pipeline completo: EC1 → arquivo .s
+├── test_ec1.py        # Testes automatizados (pytest)
+├── requirements.txt   # Dependências do projeto
+├── tests/             # Programas EC1 usados nos testes
+│   ├── constante.ec1
+│   ├── soma_simples.ec1
+│   ├── exemplo_pdf.ec1
+│   ├── complexo.ec1
+│   ├── erro_lexico.ec1
+│   └── ...
+└── runtime.s          # Sub-rotinas de impressão e saída (Assembly)
+```
+
+## Pré-requisitos
+
+- Python 3.8+
+- pytest (para testes)
+
+```bash
+pip install -r requirements.txt
+```
+
+## Como usar
+
+### Analisador léxico (Atividade 04)
+Imprime a sequência de tokens do programa de entrada:
+```bash
+python lexer.py tests/exemplo_pdf.ec1
+```
+Saída:
+```
+<LPAREN, "(", 0>
+<NUMBER, "33", 1>
+<PLUS, "+", 4>
+...
+```
+
+### Interpretador (Atividade 05)
+Executa o programa EC1 e imprime o resultado:
+```bash
+python interpreter.py tests/exemplo_pdf.ec1
+```
+Saída:
+```
+10065
+```
+
+### Compilador completo (Atividade 07)
+Compila um programa EC1 para Assembly x86-64:
+```bash
+python compiler.py tests/exemplo_pdf.ec1 saida.s
+cat saida.s
+```
+
+## Como rodar os testes
+
+```bash
+pytest test_ec1.py -v
+```
+
+Para rodar apenas uma atividade específica:
+```bash
+pytest test_ec1.py -v -k "TestLexer"
+pytest test_ec1.py -v -k "TestInterpretador"
+pytest test_ec1.py -v -k "TestCodegen"
+```
+
+## Erros detectados
+
+O compilador detecta e reporta erros com a posição no arquivo:
+
+| Tipo | Exemplo | Mensagem |
+|------|---------|----------|
+| Léxico | `(3 @ 4)` | `Erro léxico na posição 3: caractere inesperado '@'` |
+| Sintático | `(3 4)` | `Erro sintático na posição 3: operador esperado` |
+| Semântico | `(5 / 0)` | `Divisão por zero na expressão EC1` |
+
+## Montando e executando o assembly (Linux/WSL)
+
+Para montar o arquivo `.s` gerado e criar um executável, é necessário o arquivo `runtime.s` e o GNU Assembler:
+
+```bash
+as saida.s -o saida.o
+ld saida.o -o saida
+./saida
+```
+
+> O assembly gerado é x86-64 Linux e requer WSL ou Linux para ser executado.
