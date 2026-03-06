@@ -38,11 +38,6 @@ compiladores/
 ## Pré-requisitos
 
 - Python 3.8+
-- pytest (para testes)
-
-```bash
-pip install -r requirements.txt
-```
 
 ## Como usar
 
@@ -74,19 +69,6 @@ Compila um programa EC1 para Assembly x86-64:
 ```bash
 python compiler.py tests/exemplo_pdf.ec1 saida.s
 cat saida.s
-```
-
-## Como rodar os testes
-
-```bash
-pytest test_ec1.py -v
-```
-
-Para rodar apenas uma atividade específica:
-```bash
-pytest test_ec1.py -v -k "TestLexer"
-pytest test_ec1.py -v -k "TestInterpretador"
-pytest test_ec1.py -v -k "TestCodegen"
 ```
 
 ## Erros detectados
