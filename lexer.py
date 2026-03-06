@@ -1,15 +1,14 @@
-
 import re
 
 TOKEN_REGEX = [
     ("NUMBER", r"[0-9]+"),
-    ("PLUS", r"\+"),
-    ("MINUS", r"-"),
-    ("TIMES", r"\*"),
-    ("DIV", r"/"),
+    ("PLUS",   r"\+"),
+    ("MINUS",  r"-"),
+    ("TIMES",  r"\*"),
+    ("DIV",    r"/"),
     ("LPAREN", r"\("),
     ("RPAREN", r"\)"),
-    ("SKIP", r"[ \t\n]+"),
+    ("SKIP",   r"[ \t\n]+"),
 ]
 
 def tokenize(code):
@@ -23,9 +22,20 @@ def tokenize(code):
             if match:
                 text = match.group(0)
                 if token_type != "SKIP":
-                    tokens.append((token_type, text))
+                    tokens.append((token_type, text, pos))  # <tipo, lexema, posicao>
                 pos = match.end(0)
                 break
         if not match:
-            raise SyntaxError(f"Caractere inesperado: {code[pos]}")
+            raise SyntaxError(f"Erro léxico na posição {pos}: caractere inesperado '{code[pos]}'")
     return tokens
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) != 2:
+        print("Uso: python lexer.py entrada.ec1")
+        sys.exit(1)
+    with open(sys.argv[1]) as f:
+        source = f.read()
+    for tok in tokenize(source):
+        tipo, lexema, posicao = tok
+        print(f"<{tipo}, \"{lexema}\", {posicao}>")
