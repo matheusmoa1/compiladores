@@ -1,4 +1,7 @@
+### Equipe: Alisson Gabriel, Cassio Vittori, Hiago Galdino e Matheus Oliveira
+
 # Compilador EC1
+
 
 Compilador para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvido na disciplina de Compiladores.  
 Traduz expressões aritméticas com operandos constantes para código Assembly x86-64.
