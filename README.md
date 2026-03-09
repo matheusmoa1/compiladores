@@ -1,4 +1,4 @@
-### Equipe: Alisson Gabriel, Cassio Vittori, Hiago Galdino e Matheus Oliveira
+> Equipe: Alisson Gabriel, Cassio Vittori, Hiago Galdino e Matheus Oliveira
 
 # Compilador EC1
 
