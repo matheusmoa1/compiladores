@@ -1,92 +1,94 @@
-> Equipe: Alisson Gabriel, Cassio Vittori, Hiago Galdino e Matheus Oliveira
+> **Equipe:** Alisson Gabriel, Cassio Vittori, Hiago Galdino e Matheus Oliveira
 
-# Compilador EC1
+# Compilador EC1 + EC2
 
+Compilador completo para **EC1** (Atividades 04, 05, 07) e **EC2** (Atividade 08).
 
-Compilador para a linguagem **EC1 (Expressões Constantes 1)**, desenvolvido na disciplina de Compiladores.  
-Traduz expressões aritméticas com operandos constantes para código Assembly x86-64.
+## EC1 vs EC2
 
-## Exemplos de programas EC1 válidos
+| Característica | EC1 | EC2 |
+|---|---|---|
+| **Parênteses** | Obrigatórios | Opcionais — precedência `* /` > `+ -` |
+| **Associatividade** | N/A | Todos à esquerda |
+| **Exemplo** | `(33 + (912 * 11))` | `33 + 912 * 11` = 10065 |
 
+## Exemplos
+
+### EC1
 ```
 333
 (6 * 7)
 (3 + (4 + (11 + 7)))
-((427 / 7) + (11 * (231 + 5)))
+```
+
+### EC2
+```
+7 + 5 * 3        # = 22
+10 - 8 - 2       # = 0
+(7 + 5) * 3      # = 36
 ```
 
 ## Estrutura do projeto
 
 ```
-compiladores/
-├── ast_nodes.py       # Nós da árvore sintática (Number, BinOp)
-├── lexer.py           # Análise léxica — gera tokens com posição
-├── parser.py          # Análise sintática — produz a AST
-├── interpreter.py     # Interpretador por varredura da árvore
-├── print_tree.py      # Impressão da AST no formato EC1
-├── codegen.py         # Geração de código Assembly x86-64
-├── compiler.py        # Pipeline completo: EC1 → arquivo .s
-├── test_ec1.py        # Testes automatizados (pytest)
-├── requirements.txt   # Dependências do projeto
-├── tests/             # Programas EC1 usados nos testes
-│   ├── constante.ec1
-│   ├── soma_simples.ec1
-│   ├── exemplo_pdf.ec1
-│   ├── complexo.ec1
-│   ├── erro_lexico.ec1
-│   └── ...
-└── runtime.s          # Sub-rotinas de impressão e saída (Assembly)
+├── ast_nodes.py       # AST (Number, BinOp)
+├── lexer.py           # Análise léxica (EC1 + EC2)
+├── parser.py          # Parser EC1
+├── parser_ec2.py      # Parser EC2 (precedência)
+├── codegen.py         # Assembly x86-64
+├── compiler.py        # Compilador EC1
+├── compiler_ec2.py    # Compilador EC2
+├── interpreter.py     # Interpretador
+├── print_tree.py      # Impressão AST
+└── tests/
+    ├── ec1/           # .ec1 (com parênteses)
+    └── ec2/           # .ec2 (sem parênteses)
 ```
 
 ## Pré-requisitos
 
-- Python 3.8+
+**Apenas Python 3.8+** — usa só biblioteca padrão (`re`, `sys`).
 
 ## Como usar
 
-### Analisador léxico (Atividade 04)
-Imprime a sequência de tokens do programa de entrada:
+### EC1
 ```bash
-python lexer.py tests/exemplo_pdf.ec1
-```
-Saída:
-```
-<LPAREN, "(", 0>
-<NUMBER, "33", 1>
-<PLUS, "+", 4>
-...
+python lexer.py tests/ec1/exemplo_pdf.ec1
+python interpreter.py tests/ec1/exemplo_pdf.ec1
+python compiler.py tests/ec1/exemplo_pdf.ec1 saida.s
 ```
 
-### Interpretador (Atividade 05)
-Executa o programa EC1 e imprime o resultado:
+### EC2
 ```bash
-python interpreter.py tests/exemplo_pdf.ec1
-```
-Saída:
-```
-10065
-```
-
-### Compilador completo (Atividade 07)
-Compila um programa EC1 para Assembly x86-64:
-```bash
-python compiler.py tests/exemplo_pdf.ec1 saida.s
+python interpreter.py tests/ec2/soma_mult.ec2
+python compiler_ec2.py tests/ec2/soma_mult.ec2 saida.s
 cat saida.s
+```
+
+## Testes manuais
+
+### EC1
+```bash
+python interpreter.py tests/ec1/exemplo_pdf.ec1    # 10065
+python interpreter.py tests/ec1/complexo.ec1       # 2657
+```
+
+### EC2
+```bash
+python interpreter.py tests/ec2/soma_mult.ec2      # 22
+python interpreter.py tests/ec2/sub_esquerda.ec2   # 0
+python interpreter.py tests/ec2/complexo.ec2       # 13
 ```
 
 ## Erros detectados
 
-O compilador detecta e reporta erros com a posição no arquivo:
-
 | Tipo | Exemplo | Mensagem |
 |------|---------|----------|
-| Léxico | `(3 @ 4)` | `Erro léxico na posição 3: caractere inesperado '@'` |
-| Sintático | `(3 4)` | `Erro sintático na posição 3: operador esperado` |
-| Semântico | `(5 / 0)` | `Divisão por zero na expressão EC1` |
+| Léxico | `7 + @ 3` | `Erro léxico na posição 4` |
+| Sintático | `7 +` | `Erro sintático: esperado número ou '('` |
+| Semântico | `10 / 0` | `Divisão por zero` |
 
-## Montando e executando o assembly (Linux/WSL)
-
-Para montar o arquivo `.s` gerado e criar um executável, é necessário o arquivo `runtime.s` e o GNU Assembler:
+## Montagem (Linux/WSL)
 
 ```bash
 as saida.s -o saida.o
@@ -94,4 +96,4 @@ ld saida.o -o saida
 ./saida
 ```
 
-> O assembly gerado é x86-64 Linux e requer WSL ou Linux para ser executado.
+> **Assembly x86-64 Linux.** Precisa do `runtime.s`.
