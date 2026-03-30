@@ -61,5 +61,5 @@ if __name__ == "__main__":
 
     except Exception as e:
         # Se der erro de sintaxe ou semântica, a gente avisa aqui
-        print(f"❌ Erro durante a compilação: {e}")
+        print(f"Erro durante a compilação: {e}")
         sys.exit(1)
