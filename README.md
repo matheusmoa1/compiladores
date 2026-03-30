@@ -1,134 +1,146 @@
-> **Equipe:** Alisson Gabriel, Cassio Vittori, Hiago Galdino e Matheus Oliveira
+# Compilador Cmd
 
-# Compilador EC1 + EC2 + EV
+Este projeto e um compilador modular capaz de transformar codigo de alto nivel (Linguagem Cmd) em binarios executaveis nativos para macOS, Linux e Windows (x86-64).
 
-Compilador completo para **EC1** (Atividades 04, 05, 07), **EC2** (Atividade 08) e **EV** (Atividade 09).
+## Capacidades do Compilador
 
-## EC1 vs EC2 vs EV
+O projeto suporta uma linguagem completa (Cmd) com as seguintes funcionalidades:
 
-| Característica | EC1 | EC2 | EV |
-|---|---|---|---|
-| **Parênteses** | Obrigatórios | Opcionais — precedência `* /` > `+ -` | Opcionais — precedência `* /` > `+ -` |
-| **Associatividade** | N/A | Todos à esquerda | Todos à esquerda |
-| **Variáveis** | Não | Não | Sim |
-| **Exemplo** | `(33 + (912 * 11))` | `33 + 912 * 11` = 10065 | `x = 10; = x * 2` = 20 |
+- Variaveis Dinamicas: Declaracao e atribuicao de valores.
+- Arithmetica: Suporte a soma, subtracao e multiplicacao com precedencia.
+- Estruturas de Controle:
+  - if / else: Execucao condicional de blocos de codigo.
+  - while: Lacos de repeticao baseados em condicoes.
+- Comparacoes: Operadores relacionais igual, menor que e maior que.
+- Blocos de Escopo: Agrupamento de comandos usando chaves.
+- Geracao de Assembly: Produz codigo x86-64 puro em sintaxe AT&T.
 
-## Exemplos
+---
 
-### EC1
-```
-333
-(6 * 7)
-(3 + (4 + (11 + 7)))
-```
+## Casos de Uso (Exemplos)
 
-### EC2
-```
-7 + 5 * 3        # = 22
-10 - 8 - 2       # = 0
-(7 + 5) * 3      # = 36
-```
+Os exemplos a seguir estao disponiveis na pasta tests/cmd/ e demonstram a versatilidade do compilador:
 
-### EV
-```
-l = 30;
-c = 40;
-= l + l + c + c  # = 140
+### 1. Operacoes Simples (simples.cmd)
+Realiza um calculo aritmetico direto e retorna o resultado.
+```c
+{
+  return 7 * 6;
+}
 ```
 
-```
-x = (7 + 4) * 12;
-y = x * 3 + 11;
-= (x * y) + (x * 11) + (y * 13)  # = 60467
-```
-
-## Estrutura do projeto
-
-```
-├── ast_nodes.py       # AST (Number, BinOp, Var, Decl, Programa)
-├── lexer.py           # Análise léxica (EC1 + EC2 + EV)
-├── parser.py          # Parser EC1
-├── parser_ec2.py      # Parser EC2 (precedência)
-├── parser_ev.py       # Parser EV (declarações e variáveis)
-├── semantic.py        # Análise semântica EV
-├── codegen.py         # Assembly x86-64
-├── compiler.py        # Compilador EC1
-├── compiler_ec2.py    # Compilador EC2
-├── compiler_ev.py     # Compilador EV
-├── interpreter.py     # Interpretador EC1/EC2
-├── interpreter_ev.py  # Interpretador EV
-├── print_tree.py      # Impressão AST
-└── tests/
-    ├── ec1/           # .ec1 (com parênteses)
-    ├── ec2/           # .ec2 (sem parênteses)
-    └── ev/            # .ev (com variáveis)
+### 2. Condicionais e Valor Absoluto (if_else.cmd)
+Demonstra o uso de variaveis e a estrutura if/else para calcular o valor absoluto da diferenca entre dois numeros.
+```c
+a = 10;
+b = 20;
+delta = 0;
+{
+  delta = a - b;
+  if delta < 0 {
+    delta = 0 - delta;
+  } else {
+    delta = delta;
+  }
+  return delta;
+}
 ```
 
-## Pré-requisitos
-
-**Apenas Python 3.8+** — usa só biblioteca padrão (`re`, `sys`).
-
-## Como usar
-
-### EC1
-```bash
-python lexer.py tests/ec1/exemplo_pdf.ec1
-python interpreter.py tests/ec1/exemplo_pdf.ec1
-python compiler.py tests/ec1/exemplo_pdf.ec1 saida.s
+### 3. Calculo de Resto (resto.cmd)
+Utiliza um laco while para calcular o resto de uma divisao atraves de subtracoes sucessivas.
+```c
+m = 10;
+n = 4;
+{
+  while m + 1 > n {
+    m = m - n;
+  }
+  return m;
+}
 ```
 
-### EC2
-```bash
-python interpreter.py tests/ec2/soma_mult.ec2
-python compiler_ec2.py tests/ec2/soma_mult.ec2 saida.s
-cat saida.s
+### 4. Algoritmo de Euclides - MDC (mdc.cmd)
+Implementacao completa do algoritmo de Euclides para encontrar o Maximo Divisor Comum entre dois numeros, utilizando loops aninhados e variaveis auxiliares.
+```c
+a = 18;
+b = 12;
+r = 0;
+{
+  r = a;
+  while r + 1 > b {
+    r = r - b;
+  }
+  
+  while r > 0 {
+    a = b;
+    b = r;
+    r = a;
+    while r + 1 > b {
+      r = r - b;
+    }
+  }
+  return b;
+}
 ```
 
-### EV
-```bash
-python interpreter_ev.py tests/ev/complexo.ev
-python compiler_ev.py tests/ev/complexo.ev saida.s
-cat saida.s
-```
+---
 
-## Testes manuais
+## Como Rodar (Por Plataforma)
 
-### EC1
-```bash
-python interpreter.py tests/ec1/exemplo_pdf.ec1    # 10065
-python interpreter.py tests/ec1/complexo.ec1       # 2657
-```
+O processo de transformar o arquivo .s gerado em um programa varia conforme o sistema operacional:
 
-### EC2
-```bash
-python interpreter.py tests/ec2/soma_mult.ec2      # 22
-python interpreter.py tests/ec2/sub_esquerda.ec2   # 0
-python interpreter.py tests/ec2/complexo.ec2       # 13
-```
+### macOS (x86-64)
+No Mac, sao usadas as ferramentas nativas do CommandLineTools.
 
-### EV
-```bash
-python interpreter_ev.py tests/ev/perimetro.ev     # 140
-python interpreter_ev.py tests/ev/simples.ev       # 18172
-python interpreter_ev.py tests/ev/complexo.ev      # 60467
-python interpreter_ev.py tests/ev/so_resultado.ev  # 11
-```
+1. Gerar Assembly:
+   python3 compiler.py entrada.cmd saida.s
 
-## Erros detectados
+2. Montar e Ligar:
+   as saida.s -o saida.o
+   ld saida.o -o programa -lSystem -L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
 
-| Tipo | Exemplo | Mensagem |
-|------|---------|----------|
-| Léxico | `7 + @ 3` | `Erro léxico na posição 4` |
-| Sintático | `7 +` | `Erro sintático: esperado número ou '('` |
-| Semântico (EC1/EC2) | `10 / 0` | `Divisão por zero` |
-| Semântico (EV) | `= x + 1` | `Erro semantico: variavel 'x' nao foi declarada` |
+3. Executar:
+   ./programa
 
-## Montagem (Linux/WSL)
+### Linux / WSL (Ubuntu/Debian)
+No Linux, o processo e direto devido ao linking estatico por padrao.
 
-```bash
-as saida.s -o saida.o
-ld saida.o -o saida
-./saida
-```
+1. Gerar Assembly:
+   python3 compiler.py entrada.cmd saida.s
 
-> **Assembly x86-64 Linux.** Precisa do `runtime.s`.
+2. Montar e Ligar:
+   as saida.s -o saida.o
+   ld saida.o -o programa
+
+3. Executar:
+   ./programa
+
+### Windows (x64 via MinGW)
+No Windows, recomenda-se o uso do ambiente MinGW-w64 (GCC).
+
+1. Gerar Assembly:
+   python compiler.py entrada.cmd saida.s
+
+2. Montar e Ligar:
+   as saida.s -o saida.o
+   gcc saida.o -o programa.exe
+
+3. Executar:
+   programa.exe
+
+Diferenca de Runtime: Para Windows e Linux, e necessario ajustar as chamadas de sistema no arquivo runtime.s para usar as syscalls corretas de cada kernel ou chamar funcoes da biblioteca C (libc).
+
+---
+
+## Estrutura de Funcionamento
+
+O projeto segue a arquitetura de compiladores:
+
+1. Lexer (lexer.py): Transforma o texto em uma sequencia de tokens.
+2. Parser (parser.py): Organiza os tokens em uma Arvore de Sintaxe Abstrata (AST).
+3. Semantico (semantic.py): Garante que variaveis usadas foram declaradas.
+4. CodeGen (codegen.py): Traduz a AST em instrucoes Assembly.
+5. Runtime (runtime.s): Fornece as funcoes de suporte para impressao e encerramento.
+
+## Equipe
+- Alisson Gabriel, Cassio Vittori, Hiago Galdino e Matheus Oliveira
