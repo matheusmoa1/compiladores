@@ -14,6 +14,10 @@ TK_ASSIGN = 'ASSIGN'    # O '=' sozinho
 TK_EQ     = 'EQ'        # O '==' de comparação 
 TK_LT     = 'LT'        # < 
 TK_GT     = 'GT'        # > 
+TK_LE     = 'LE'        # <=
+TK_GE     = 'GE'        # >=
+TK_NE     = 'NE'        # !=
+TK_MOD    = 'MOD'       # %
 TK_SEMI   = 'SEMI'      # ;
 TK_COMMA  = 'COMMA'     # ,
 TK_EOF    = 'EOF'
@@ -92,14 +96,33 @@ class Lexer:
         if ch.isalpha() or ch == '_':
             return self.read_id_or_keyword()
 
-        # A lógica crítica: '=' vs '==' 
+        # A lógica crítica: '=' vs '==' etc
         if ch == '=':
             if self.peek() == '=':
-                self.pos += 2 # Pula os dois '='
+                self.pos += 2
                 return Token(TK_EQ, '==')
             else:
-                self.pos += 1 # Pula só o '='
+                self.pos += 1
                 return Token(TK_ASSIGN, '=')
+
+        if ch == '!':
+            if self.peek() == '=':
+                self.pos += 2
+                return Token(TK_NE, '!=')
+                
+        if ch == '<':
+            if self.peek() == '=':
+                self.pos += 2
+                return Token(TK_LE, '<=')
+            self.pos += 1
+            return Token(TK_LT, '<')
+
+        if ch == '>':
+            if self.peek() == '=':
+                self.pos += 2
+                return Token(TK_GE, '>=')
+            self.pos += 1
+            return Token(TK_GT, '>')
 
         # Operadores simples e pontuação
         self.pos += 1
@@ -108,12 +131,11 @@ class Lexer:
             '-': TK_MINUS,
             '*': TK_MUL,
             '/': TK_DIV,
+            '%': TK_MOD,
             '(': TK_LPAREN,
             ')': TK_RPAREN,
             '{': TK_LBRACE,
             '}': TK_RBRACE,
-            '<': TK_LT,
-            '>': TK_GT,
             ';': TK_SEMI,
             ',': TK_COMMA,
         }
