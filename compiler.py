@@ -7,8 +7,8 @@ TEMPLATE = """
 {bss}
 
 .section .text
-.globl _start
-_start:
+.globl main
+main:
 {main}
     call imprime_num
     call sair
