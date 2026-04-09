@@ -19,36 +19,65 @@ class Parser:
         self.error(f"Esperava {ttype}")
 
     def parse(self):
-        """
-        <programa> ::= <decl>* '{' <cmd>* 'return' <exp> ';' '}'
-        """
-        # 1. Declarações no topo (opcionais, mas vêm antes das chaves)
         decls = []
-        while self.tok.type == TK_ID and self.lexer.peek() == '=':
-            # Se é um ID seguido de '=', é uma declaração global
-            name = self.eat(TK_ID)
-            self.eat(TK_ASSIGN)
-            expr = self.parse_expr()
-            self.eat(TK_SEMI)
-            decls.append(Decl(name, expr))
+        while self.tok.type in ('VAR', 'FUN'):
+            if self.tok.type == 'VAR':
+                self.eat('VAR')
+                name = self.eat(TK_ID)
+                self.eat(TK_ASSIGN)
+                expr = self.parse_expr()
+                self.eat(TK_SEMI)
+                decls.append(Decl(name, expr))
+            else:
+                decls.append(self.parse_fundecl())
 
-        # 2. O corpo do programa começa com '{' 
+        self.eat('MAIN')
         self.eat(TK_LBRACE)
         
-        # 3. Lista de comandos (if, while, atribuição) 
         cmds = []
         while self.tok.type in (TK_ID, 'IF', 'WHILE'):
             cmds.append(self.parse_cmd())
 
-        # 4. O retorno obrigatório 
         self.eat('RETURN')
         result = self.parse_expr()
         self.eat(TK_SEMI)
         
-        # 5. Fecha o programa
         self.eat(TK_RBRACE)
-        
         return Programa(decls, cmds, result)
+
+    def parse_fundecl(self):
+        self.eat('FUN')
+        name = self.eat(TK_ID)
+        self.eat(TK_LPAREN)
+        
+        params = []
+        if self.tok.type == TK_ID:
+            params.append(self.eat(TK_ID))
+            while self.tok.type == TK_COMMA:
+                self.eat(TK_COMMA)
+                params.append(self.eat(TK_ID))
+        self.eat(TK_RPAREN)
+        self.eat(TK_LBRACE)
+        
+        decls = []
+        while self.tok.type == 'VAR':
+            self.eat('VAR')
+            vname = self.eat(TK_ID)
+            self.eat(TK_ASSIGN)
+            vexpr = self.parse_expr()
+            self.eat(TK_SEMI)
+            decls.append(Decl(vname, vexpr))
+            
+        cmds = []
+        while self.tok.type in (TK_ID, 'IF', 'WHILE'):
+            cmds.append(self.parse_cmd())
+            
+        self.eat('RETURN')
+        result = self.parse_expr()
+        self.eat(TK_SEMI)
+        
+        self.eat(TK_RBRACE)
+        return FunDecl(name, params, decls, cmds, result)
 
     def parse_cmd(self):
         # <cmd> ::= <if> | <while> | <atrib>
@@ -132,11 +161,22 @@ class Parser:
         return node
 
     def parse_factor(self):
-        # Números, Variáveis ou parênteses 
+        # Números, Variáveis, Funções ou parênteses 
         if self.tok.type == TK_NUM:
             return Number(self.eat(TK_NUM))
         elif self.tok.type == TK_ID:
-            return Var(self.eat(TK_ID))
+            name = self.eat(TK_ID)
+            if self.tok.type == TK_LPAREN:
+                self.eat(TK_LPAREN)
+                args = []
+                if self.tok.type != TK_RPAREN:
+                    args.append(self.parse_expr())
+                    while self.tok.type == TK_COMMA:
+                        self.eat(TK_COMMA)
+                        args.append(self.parse_expr())
+                self.eat(TK_RPAREN)
+                return Call(name, args)
+            return Var(name)
         elif self.tok.type == TK_LPAREN:
             self.eat(TK_LPAREN)
             node = self.parse_expr()
