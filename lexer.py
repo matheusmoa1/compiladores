@@ -24,7 +24,9 @@ KEYWORDS = {
     'return' : 'RETURN',
     'if'     : 'IF',        
     'else'   : 'ELSE',      
-    'while'  : 'WHILE',     
+    'while'  : 'WHILE',
+    'fun'    : 'FUN',
+    'main'   : 'MAIN',
 }
 
 class Token:
