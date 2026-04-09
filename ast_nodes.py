@@ -40,20 +40,22 @@ class While:
         self.cmds = cmds    
 
 class Programa:
-    def __init__(self, decls, cmds, result):
+    def __init__(self, decls, cmds):
         self.decls  = decls   
         self.cmds   = cmds    
-        self.result = result
 
 class FunDecl:
-    def __init__(self, name, params, decls, cmds, result):
+    def __init__(self, name, params, decls, cmds):
         self.name = name
         self.params = params
         self.decls = decls
         self.cmds = cmds
-        self.result = result
 
 class Call:
     def __init__(self, name, args):
         self.name = name
         self.args = args
+
+class Return:
+    def __init__(self, expr):
+        self.expr = expr
