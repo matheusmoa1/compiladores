@@ -5,6 +5,7 @@ class CodeGen:
         self.code = []
         self.label_count = 0
         self.env = {}
+        self.current_epilogue = ""
 
     def new_label(self, prefix):
         self.label_count += 1
@@ -13,7 +14,7 @@ class CodeGen:
     def get_var_addr(self, name):
         if name in self.env:
             return self.env[name]
-        return f"{name}"
+        return f"{name}(%rip)"
 
     def generate(self, programa):
         bss = [".section .bss"]
@@ -22,17 +23,20 @@ class CodeGen:
                 bss.append(f"    {d.name}: .quad 0")
         
         self.code = []
-
         self.env = {}
+        
+        # main_cmds will store just the direct commands of _start
         for d in programa.decls:
             if isinstance(d, Decl):
                 self.gen_expr(d.expr)
-                self.code.append(f"    movq %rax, {d.name}")
+                addr = self.get_var_addr(d.name)
+                self.code.append(f"    movq %rax, {addr}")
 
+        self.current_epilogue = self.new_label("L_main_end")
         for cmd in programa.cmds:
             self.gen_cmd(cmd)
 
-        self.gen_expr(programa.result)
+        self.code.append(f"{self.current_epilogue}:")
         main_code = self.code
 
         funcs_code = []
@@ -52,6 +56,7 @@ class CodeGen:
                     offset = idx * 8
                     self.env[vdecl.name] = f"{offset}(%rbp)"
 
+                self.current_epilogue = self.new_label(f"L_epilogo_{fdecl.name}")
                 self.code.append(f"{fdecl.name}:")
                 self.code.append(f"    pushq %rbp")
                 
@@ -68,8 +73,7 @@ class CodeGen:
                 for cmd in fdecl.cmds:
                     self.gen_cmd(cmd)
                     
-                self.gen_expr(fdecl.result)
-                
+                self.code.append(f"{self.current_epilogue}:")
                 if L > 0:
                     self.code.append(f"    addq ${L * 8}, %rsp")
                 self.code.append(f"    popq %rbp")
@@ -114,6 +118,10 @@ class CodeGen:
             for c in node.cmds: self.gen_cmd(c)
             self.code.append(f"    jmp {l_start}")
             self.code.append(f"{l_end}:")
+            
+        elif isinstance(node, Return):
+            self.gen_expr(node.expr)
+            self.code.append(f"    jmp {self.current_epilogue}")
 
     def gen_expr(self, node):
         if isinstance(node, Number):
@@ -142,12 +150,15 @@ class CodeGen:
             ops = {
                 '+': 'addq %rbx, %rax',
                 '-': 'subq %rbx, %rax',
-                '*': 'imulq %rbx, %rax',
-                '/': 'cqto\n    idivq %rbx'
+                '*': 'imulq %rbx, %rax'
             }
             if node.op == '/':
                 self.code.append("    cqto")
                 self.code.append("    idivq %rbx")
+            elif node.op == '%':
+                self.code.append("    cqto")
+                self.code.append("    idivq %rbx")
+                self.code.append("    movq %rdx, %rax")
             else:
                 self.code.append(f"    {ops[node.op]}")
 
@@ -160,6 +171,13 @@ class CodeGen:
             self.code.append("    xorq %rcx, %rcx")
             self.code.append("    cmpq %rax, %rbx") 
             
-            set_op = {'==': 'setz', '<': 'setg', '>': 'setl'}[node.op]
+            set_op = {
+                '==': 'setz', 
+                '<': 'setg', 
+                '>': 'setl', 
+                '<=': 'setge', 
+                '>=': 'setle', 
+                '!=': 'setnz'
+            }[node.op]
             self.code.append(f"    {set_op} %cl")
             self.code.append("    movq %rcx, %rax")
