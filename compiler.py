@@ -1,42 +1,56 @@
-from lexer import tokenize
 from parser import Parser
-from codegen import generate
+from codegen import CodeGen
+from semantic import verificar
 import sys
 
 TEMPLATE = """
+{bss}
+
 .section .text
 .globl _start
 _start:
-{code}
+{main}
     call imprime_num
     call sair
+
+{funcs}
+
 .include "runtime.s"
 """
 
 def compile_ec1(source):
-    tokens = tokenize(source)
-    parser = Parser(tokens)
+    # Análise Sintática e Léxica
+    parser = Parser(source)
     ast = parser.parse()
-    asm_code = generate(ast)
-    return TEMPLATE.format(code=asm_code)
+    
+    # Análise Semântica
+    verificar(ast)
+    
+    # Geração de Código
+    codegen = CodeGen()
+    bss, main_code, funcs_code = codegen.generate(ast)
+    
+    return TEMPLATE.format(bss=bss, main=main_code, funcs=funcs_code)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Uso: python compiler.py entrada.ec1 saida.s")
         sys.exit(1)
 
-    with open(sys.argv[1]) as f:
-        source = f.read()
+    entrada = sys.argv[1]
+    saida = sys.argv[2]
 
-    output = compile_ec1(source)
+    try:
+        with open(entrada, "r") as f:
+            source = f.read()
 
-        # Salva o resultado no arquivo .s
+        output_assembly = compile_ec1(source)
+
         with open(saida, "w") as f:
             f.write(output_assembly)
         
         print(f"Sucesso! Código Assembly gerado em: {saida}")
 
     except Exception as e:
-        # Se der erro de sintaxe ou semântica, a gente avisa aqui
         print(f"Erro durante a compilação: {e}")
         sys.exit(1)
