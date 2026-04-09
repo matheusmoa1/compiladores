@@ -1,61 +1,73 @@
-from ast_nodes import Number, BinOp, Var, Decl, Programa, Assign, If, While, Compare
-
+from ast_nodes import Number, BinOp, Var, Decl, Programa, Assign, If, While, Compare, FunDecl, Call
 
 def verificar(programa):
-    # Nossa 'tabela de símbolos' é um set simples com os nomes das variáveis
-    declaradas = set()
-
-    # 1. Primeiro, registramos quem nasceu no topo do programa
+    ambiente_global = {} 
+    
     for decl in programa.decls:
-        # A expressão que inicializa a variável também precisa ser válida!
-        verificar_expr(decl.expr, declaradas)
-        declaradas.add(decl.name)
+        if isinstance(decl, Decl):
+            verificar_expr(decl.expr, ambiente_global, None)
+            ambiente_global[decl.name] = {'tipo': 'var'}
+        elif isinstance(decl, FunDecl):
+            # Registra função no ambiente global
+            ambiente_global[decl.name] = {'tipo': 'fun', 'params': len(decl.params)}
+            
+            ambiente_local = set(decl.params)
+            
+            for f_decl in decl.decls:
+                verificar_expr(f_decl.expr, ambiente_global, ambiente_local)
+                ambiente_local.add(f_decl.name)
+            
+            for cmd in decl.cmds:
+                verificar_cmd(cmd, ambiente_global, ambiente_local)
+                
+            verificar_expr(decl.result, ambiente_global, ambiente_local)
 
-    # 2. Depois, conferimos se os comandos (if, while, atribuição) fazem sentido
     for cmd in programa.cmds:
-        verificar_cmd(cmd, declaradas)
-
-    # 3. Por fim, checamos a expressão de retorno lá no final
-    verificar_expr(programa.result, declaradas)
-
-
-def verificar_cmd(node, declaradas):
-    if isinstance(node, Assign):
-        # Regra de ouro: Não pode dar valor pra quem não foi declarado
-        if node.name not in declaradas:
-            raise NameError(f"Erro Semântico: Você tentou mudar a variável '{node.name}', mas ela nem foi declarada!")
+        verificar_cmd(cmd, ambiente_global, None)
         
-        # O valor que você está atribuindo também precisa ser uma conta válida
-        verificar_expr(node.expr, declaradas)
+    verificar_expr(programa.result, ambiente_global, None)
+
+def verificar_cmd(node, ambiente_global, ambiente_local):
+    if isinstance(node, Assign):
+        esta_em_local = ambiente_local and node.name in ambiente_local
+        esta_em_global = node.name in ambiente_global and ambiente_global[node.name]['tipo'] == 'var'
+        if not (esta_em_local or esta_em_global):
+            raise NameError(f"Erro Semântico: Variável '{node.name}' não declarada!")
+        verificar_expr(node.expr, ambiente_global, ambiente_local)
 
     elif isinstance(node, If):
-        # No 'if', a condição tem que ser válida
-        verificar_expr(node.cond, declaradas)
-        # E todos os comandos dentro do 'then' e do 'else' também
-        for c in node.then_cmds: verificar_cmd(c, declaradas)
-        for c in node.else_cmds: verificar_cmd(c, declaradas)
+        verificar_expr(node.cond, ambiente_global, ambiente_local)
+        for c in node.then_cmds: verificar_cmd(c, ambiente_global, ambiente_local)
+        for c in node.else_cmds: verificar_cmd(c, ambiente_global, ambiente_local)
 
     elif isinstance(node, While):
-        # No 'while', a condição manda
-        verificar_expr(node.cond, declaradas)
-        # E o corpo do loop precisa estar limpo
-        for c in node.cmds: verificar_cmd(c, declaradas)
+        verificar_expr(node.cond, ambiente_global, ambiente_local)
+        for c in node.cmds: verificar_cmd(c, ambiente_global, ambiente_local)
 
-
-def verificar_expr(node, declaradas):
+def verificar_expr(node, ambiente_global, ambiente_local):
     if isinstance(node, Number):
-        # Número é número, não tem erro
         return
 
     elif isinstance(node, Var):
-        if node.name not in declaradas:
-            raise NameError(f"Erro Semântico: A variável '{node.name}' apareceu do nada! Você esqueceu de declarar?")
+        esta_em_local = ambiente_local and node.name in ambiente_local
+        esta_em_global = node.name in ambiente_global and ambiente_global[node.name]['tipo'] == 'var'
+        if not (esta_em_local or esta_em_global):
+            raise NameError(f"Erro Semântico: A variável '{node.name}' não foi declarada!")
+
+    elif isinstance(node, Call):
+        if node.name not in ambiente_global or ambiente_global[node.name]['tipo'] != 'fun':
+            raise NameError(f"Erro Semântico: A função '{node.name}' não foi declarada!")
+        
+        qtd_esperada = ambiente_global[node.name]['params']
+        if len(node.args) != qtd_esperada:
+            raise TypeError(f"Erro Semântico: Função '{node.name}' espera {qtd_esperada} argumentos, mas recebeu {len(node.args)}.")
+            
+        for arg in node.args:
+            verificar_expr(arg, ambiente_global, ambiente_local)
 
     elif isinstance(node, (BinOp, Compare)):
-        # Se for conta (+, -, *) ou comparação (==, <, >), checa os dois lados
-        verificar_expr(node.left, declaradas)
-        verificar_expr(node.right, declaradas)
+        verificar_expr(node.left, ambiente_global, ambiente_local)
+        verificar_expr(node.right, ambiente_global, ambiente_local)
 
     else:
-        # Se cair aqui, é porque o nó é algum tipo que a gente não esperava
         raise ValueError(f"Nó desconhecido na análise semântica: {type(node).__name__}")
