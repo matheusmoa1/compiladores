@@ -1,0 +1,10 @@
+var n = 1;
+var m = 11;
+var soma = 0;
+main {
+  while n < m {
+    soma = soma + n;
+    n = n + 1;
+  }
+  return soma;
+}
