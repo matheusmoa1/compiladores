@@ -1,4 +1,4 @@
-from ast_nodes import Number, BinOp, Var, Decl, Programa, Assign, If, While, Compare, FunDecl, Call
+from ast_nodes import Number, BinOp, Var, Decl, Programa, Assign, If, While, Compare, FunDecl, Call, Return
 
 def verificar(programa):
     ambiente_global = {} 
@@ -19,13 +19,9 @@ def verificar(programa):
             
             for cmd in decl.cmds:
                 verificar_cmd(cmd, ambiente_global, ambiente_local)
-                
-            verificar_expr(decl.result, ambiente_global, ambiente_local)
 
     for cmd in programa.cmds:
         verificar_cmd(cmd, ambiente_global, None)
-        
-    verificar_expr(programa.result, ambiente_global, None)
 
 def verificar_cmd(node, ambiente_global, ambiente_local):
     if isinstance(node, Assign):
@@ -43,6 +39,9 @@ def verificar_cmd(node, ambiente_global, ambiente_local):
     elif isinstance(node, While):
         verificar_expr(node.cond, ambiente_global, ambiente_local)
         for c in node.cmds: verificar_cmd(c, ambiente_global, ambiente_local)
+
+    elif isinstance(node, Return):
+        verificar_expr(node.expr, ambiente_global, ambiente_local)
 
 def verificar_expr(node, ambiente_global, ambiente_local):
     if isinstance(node, Number):
