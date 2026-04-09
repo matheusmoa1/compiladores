@@ -9,10 +9,12 @@ O projeto evoluiu para a linguagem **Fun**, que suporta as seguintes funcionalid
 - **Funções e Recursão**: Declaração de funções com múltiplos parâmetros e suporte total a chamadas recursivas.
 - **Variáveis Locais**: Escopo léxico estrito para variáveis dentro de funções e parâmetros.
 - **Variáveis Globais**: Armazenadas na seção `.bss` e acessíveis por todas as funções.
-- **Aritmética**: Suporte a soma, subtração, multiplicação e divisão com precedência.
-- **Estruturas de Controle**:
+- **Aritmética e Módulos**: Suporte a soma, subtração, multiplicação, divisão e resto da divisão (`%`) com precedência.
+- **Operadores Relacionais**: Validações estritas usando `>`, `<`, `==`, `>=`, `<=` e `!=`.
+- **Estruturas de Controle e Retorno Prévio**:
   - `if / else`: Execução condicional de blocos de código.
   - `while`: Laços de repetição baseados em condições.
+  - `return`: Controle flexível com encerramento forçado de funções em qualquer ponto lógico (early-return) tratando os resíduos de pilha ativamente.
 - **Geração de Assembly**: Produz código x86-64 puro em sintaxe AT&T, utilizando o registrador `RBP` para gerenciamento de frames de pilha.
 
 ## Casos de Uso (Pasta tests/fun/)
@@ -53,24 +55,65 @@ main {
 }
 ```
 
+### 3. Validação de Módulo e Early-Return (mod.fun)
+Calcula se um número é par usando o operador de resto (`%`) e utiliza o conceito de retorno forçado (early return).
+```javascript
+var x = 0;
+
+fun par(n) {
+  if (n % 2) == 0 {
+     return 1;
+  } else { }
+  return 0;
+}
+
+main {
+  x = par(10);
+  if x != 0 {
+      return 99;
+  } else { }
+  return x;
+}
+```
+
+### 4. Avaliação de Comparadores Lógicos (comp.fun)
+Valida a precisão da estrutura de controle utilizando múltiplas portas de desigualdade complexas (`<=`, `>=`, `!=`).
+```javascript
+var global = 100;
+var x = 0;
+
+main {
+  x = 10;
+  if x <= 10 { x = 5; } else { }
+  if x >= 5 { x = x + 1; } else { }
+  if x != 100 { return x; } else { }
+  return 0;
+}
+```
+
 ## Como Rodar (Windows / Git Bash)
 
-O compilador agora gera código compatível com o ponto de entrada `main` do C, o que facilita a ligação no Windows.
+O compilador gera código x64 compatível com o ponto de entrada `main` do C, o que requer o uso do compilador nativo para a ligação estrita da máquina (como o `gcc` do MinGW-w64). O arquivo `runtime.s` injerirá o print e encerramento para cada arquivo alvo rodado!
 
-1. **Gerar Assembly**:
+### Compilando e Executando (Passo-a-Passo)
+Substitua `fib` ou `mod` dependendo de qual caso de teste você quiser rodar no prompt de comandos:
+
+1. **Converter `.fun` para Assembly (`.s`)**:
    ```bash
-   python compiler.py tests/fun/fib.fun fib.s
+   python compiler.py tests/fun/mod.fun mod.s
+   ```
+   *(Caso não esteja na pasta atrelada global, invoque usando `venv`: `.\venv\Scripts\python.exe compiler.py ...`)*
+
+2. **Compilação Nativa (Via GCC)**:
+   ```bash
+   gcc mod.s -o aplicativo.exe
    ```
 
-2. **Montar e Ligar (Compilar)**:
+3. **Visualizar o Resultado**:
    ```bash
-   gcc fib.s -o fib.exe
+   ./aplicativo.exe
    ```
-
-3. **Executar**:
-   ```bash
-   ./fib.exe
-   ```
+   *(Ele exibirá imediatamente o valor computacional exato do teste. O de fibonacci imprimirá 55, o do módulo imprimirá 99).*
 
 ## Estrutura de Funcionamento
 
