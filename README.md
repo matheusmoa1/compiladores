@@ -1,6 +1,10 @@
 # Compilador Fun
 
-Este projeto é um compilador modular capaz de transformar código de alto nível (Linguagem Fun) em binários executáveis nativos. Ele foi projetado com suporte otimizado para Windows (via MinGW/GCC).
+Este projeto consiste no desenvolvimento de um compilador modular capaz de realizar a tradução de código escrito em uma linguagem de alto nível, denominada Linguagem Fun, para binários executáveis nativos. O compilador foi estruturado seguindo uma arquitetura organizada em módulos independentes, permitindo maior manutenção, escalabilidade e facilidade de evolução do sistema ao longo do tempo.
+
+A estrutura modular do compilador contempla etapas clássicas do processo de compilação, como análise léxica, análise sintática, análise semântica e geração de código, garantindo que o código-fonte seja processado de forma eficiente e estruturada até sua conversão final em executáveis compatíveis com o sistema operacional.
+
+Além disso, o projeto foi desenvolvido com suporte otimizado para o ambiente Windows, utilizando a ferramenta MinGW (Minimalist GNU for Windows) em conjunto com o compilador GCC, permitindo a geração de binários nativos executáveis diretamente no sistema operacional alvo. Essa escolha proporciona maior compatibilidade, desempenho e facilidade de integração com ferramentas de desenvolvimento amplamente utilizadas.
 
 ## Capacidades do Compilador
 
